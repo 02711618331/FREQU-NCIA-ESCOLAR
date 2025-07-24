@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Frequência Escolar Infantil</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #fefae0;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 700px;
+      margin: auto;
+      padding: 20px;
+    }
+    h1, h2 {
+      text-align: center;
+      color: #4b3f72;
+    }
+    .login, .frequencia, .historico {
+      display: none;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    label, select {
+      display: block;
+      margin: 10px 0;
+    }
+    .aluno {
+      margin: 8px 0;
+      padding: 8px;
+      background: #e9ecef;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    button {
+      padding: 10px 16px;
+      border: none;
+      background: #4b3f72;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 10px 5px;
+    }
+    button:hover {
+      background: #3a2f5a;
+    }
+    .present {
+      background-color: #d4edda;
+    }
+    .ausente {
+      background-color: #f8d7da;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Chamada da Alegria 🎒</h1>
+
+    <div class="login">
+      <h2>Entrar</h2>
+      <label>Nome do usuário:</label>
+      <input type="text" id="username" placeholder="Professor(a)..." />
+      <button onclick="login()">Entrar</button>
+    </div>
+
+    <div class="frequencia">
+      <h2>Frequência Escolar</h2>
+      <label for="turma">Selecione a turma:</label>
+      <select id="turma" onchange="carregarAlunos()">
+        <option value="">-- Escolha --</option>
+        <option value="Infantil A">Infantil A</option>
+        <option value="Infantil B">Infantil B</option>
+      </select>
+      <div id="listaAlunos"></div>
+      <button onclick="salvarFrequencia()">Salvar Frequência</button>
+      <button onclick="mostrarHistorico()">Ver Histórico</button>
+    </div>
+
+    <div class="historico">
+      <h2>Histórico</h2>
+      <div id="historicoFrequencia"></div>
+      <button onclick="voltar()">Voltar</button>
+    </div>
+  </div>
+
+  <script>
+    const alunosPorTurma = {
+      "Infantil A": ["Ana", "Bruno", "Carlos", "Daniela"],
+      "Infantil B": ["Eduarda", "Fábio", "Gabi", "Henrique"]
+    };
+
+    function login() {
+      const nome = document.getElementById("username").value;
+      if (nome.trim()) {
+        document.querySelector(".login").style.display = "none";
+        document.querySelector(".frequencia").style.display = "block";
+      } else {
+        alert("Digite o nome do usuário.");
+      }
+    }
+
+    function carregarAlunos() {
+      const turma = document.getElementById("turma").value;
+      const lista = document.getElementById("listaAlunos");
+      lista.innerHTML = "";
+
+      if (!turma) return;
+
+      alunosPorTurma[turma].forEach((aluno) => {
+        const div = document.createElement("div");
+        div.className = "aluno";
+        div.innerHTML = `
+          <span>${aluno}</span>
+          <select>
+            <option value="presente">Presente</option>
+            <option value="ausente">Ausente</option>
+          </select>
+        `;
+        lista.appendChild(div);
+      });
+    }
+
+    function salvarFrequencia() {
+      const turma = document.getElementById("turma").value;
+      const data = new Date().toLocaleDateString("pt-BR");
+      const alunos = document.querySelectorAll(".aluno");
+
+      if (!turma || alunos.length === 0) {
+        alert("Selecione a turma e marque a frequência.");
+        return;
+      }
+
+      const chamada = [];
+      alunos.forEach((div) => {
+        const nome = div.querySelector("span").textContent;
+        const status = div.querySelector("select").value;
+        chamada.push({ nome, status });
+      });
+
+      const key = `frequencia_${turma}_${data}`;
+      localStorage.setItem(key, JSON.stringify(chamada));
+      alert("Frequência salva com sucesso!");
+    }
+
+    function mostrarHistorico() {
+      document.querySelector(".frequencia").style.display = "none";
+      document.querySelector(".historico").style.display = "block";
+
+      const historicoDiv = document.getElementById("historicoFrequencia");
+      historicoDiv.innerHTML = "";
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith("frequencia_")) {
+          const turmaData = key.replace("frequencia_", "").split("_");
+          const turma = turmaData[0];
+          const data = turmaData[1];
+          const chamada = JSON.parse(localStorage.getItem(key));
+
+          let html = `<h3>${turma} - ${data}</h3><ul>`;
+          chamada.forEach((a) => {
+            const cor = a.status === "presente" ? "✅" : "❌";
+            html += `<li>${cor} ${a.nome}</li>`;
+          });
+          html += "</ul>";
+          historicoDiv.innerHTML += html;
+        }
+      }
+    }
+
+    function voltar() {
+      document.querySelector(".historico").style.display = "none";
+      document.querySelector(".frequencia").style.display = "block";
+    }
+
+    // Inicializa
+    document.querySelector(".login").style.display = "block";
+  </script>
+</body>
+</html>
